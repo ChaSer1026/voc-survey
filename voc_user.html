@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VOCpulse — Internal Survey</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Sora:wght@400;600;700&display=swap');
+  :root {
+    --navy:#0F1F3D;--ink:#1A2E4A;--blue:#1D5FA8;--sky:#3B8FD4;--teal:#0DAAAA;
+    --light:#EAF3FB;--mist:#F4F8FC;--white:#FFFFFF;--gray2:#C8D5E8;--gray3:#E5EDF6;
+    --text:#1A2E4A;--sub:#5A7394;--warn:#E05252;--gold:#F4A832;--green:#27A96C;
+    --radius:14px;--shadow:0 4px 24px rgba(15,31,61,0.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Inter',sans-serif;background:var(--mist);color:var(--text);min-height:100vh;}
+
+  /* HEADER */
+  .site-header{background:var(--navy);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,0.2);}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--teal),var(--sky));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .brand-name{font-family:'Sora',sans-serif;font-size:17px;font-weight:600;color:var(--white);letter-spacing:-0.3px;}
+  .brand-name span{color:var(--teal);}
+  .nav-tabs{display:flex;gap:4px;background:rgba(255,255,255,0.08);border-radius:10px;padding:4px;}
+  .nav-tab{padding:8px 20px;border-radius:7px;border:none;background:transparent;color:var(--gray2);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif;}
+  .nav-tab:hover{color:var(--white);background:rgba(255,255,255,0.1);}
+  .nav-tab.active{background:var(--white);color:var(--navy);font-weight:600;}
+  .page{display:none;} .page.active{display:block;}
+
+  /* SYNC BAR */
+  .sync-bar{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 20px;margin:20px auto 0;max-width:760px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .sync-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:background 0.3s;}
+  .sync-dot.online{background:var(--green);box-shadow:0 0 0 3px rgba(39,169,108,0.18);}
+  .sync-dot.offline{background:var(--gray2);}
+  .sync-dot.syncing{background:var(--gold);animation:pulse 1s infinite;}
+  .sync-dot.error{background:var(--warn);}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+  .sync-text{flex:1;min-width:160px;font-size:12px;color:var(--sub);}
+  .sync-text strong{color:var(--navy);font-weight:600;}
+
+  /* SURVEY */
+  .survey-wrap{max-width:760px;margin:20px auto 60px;padding:0 20px;}
+  .survey-hero{background:linear-gradient(135deg,var(--navy) 0%,var(--ink) 60%,#1a3a6b 100%);border-radius:var(--radius);padding:40px 48px;color:var(--white);margin-bottom:28px;position:relative;overflow:hidden;}
+  .survey-hero::before{content:'';position:absolute;right:-40px;top:-40px;width:240px;height:240px;background:radial-gradient(circle,rgba(13,170,170,0.18) 0%,transparent 70%);pointer-events:none;}
+  .survey-hero .eyebrow{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--teal);margin-bottom:10px;}
+  .survey-hero h1{font-family:'Sora',sans-serif;font-size:26px;font-weight:700;line-height:1.25;margin-bottom:10px;}
+  .survey-hero p{font-size:14px;color:rgba(255,255,255,0.65);line-height:1.6;max-width:480px;}
+  .progress-bar-wrap{background:var(--gray3);border-radius:99px;height:6px;margin-bottom:28px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--sky));border-radius:99px;transition:width 0.5s cubic-bezier(.4,0,.2,1);}
+  .progress-label{font-size:12px;color:var(--sub);margin-bottom:8px;text-align:right;}
+  .card{background:var(--white);border-radius:var(--radius);padding:32px 36px;box-shadow:var(--shadow);margin-bottom:20px;}
+  .field-group{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+  .field-group:last-child{margin-bottom:0;}
+  .field-label{font-size:13px;font-weight:600;color:var(--text);letter-spacing:0.2px;}
+  select,input[type=text]{width:100%;padding:11px 14px;border:1.5px solid var(--gray2);border-radius:9px;font-size:14px;font-family:'Inter',sans-serif;color:var(--text);background:var(--white);transition:border-color 0.2s,box-shadow 0.2s;outline:none;appearance:none;-webkit-appearance:none;}
+  select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235A7394' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px;}
+  select:focus,input[type=text]:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(59,143,212,0.12);}
+  .section-header{display:flex;align-items:center;gap:12px;margin-bottom:24px;padding-bottom:16px;border-bottom:1.5px solid var(--gray3);}
+  .section-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .section-header h2{font-family:'Sora',sans-serif;font-size:16px;font-weight:600;color:var(--navy);}
+  .section-header p{font-size:12px;color:var(--sub);margin-top:2px;}
+  .rating-question{margin-bottom:28px;}
+  .rating-question:last-child{margin-bottom:0;}
+  .q-text{font-size:14px;font-weight:500;color:var(--text);margin-bottom:12px;line-height:1.5;}
+  .emoji-scale{display:flex;gap:8px;}
+  .emoji-btn{flex:1;border:1.5px solid var(--gray2);border-radius:10px;padding:10px 6px 8px;background:var(--white);cursor:pointer;text-align:center;transition:all 0.18s;font-family:'Inter',sans-serif;}
+  .emoji-btn .emoji{font-size:22px;display:block;margin-bottom:4px;}
+  .emoji-btn .elabel{font-size:10px;font-weight:500;color:var(--sub);display:block;line-height:1.2;}
+  .emoji-btn:hover{border-color:var(--sky);background:var(--light);transform:translateY(-2px);}
+  .emoji-btn.selected{border-color:var(--blue);background:var(--light);box-shadow:0 0 0 3px rgba(29,95,168,0.12);}
+  .emoji-btn.selected .elabel{color:var(--blue);font-weight:600;}
+  .emoji-btn[data-val="1"].selected{border-color:#E05252;background:#FFF0F0;box-shadow:0 0 0 3px rgba(224,82,82,0.12);}
+  .emoji-btn[data-val="2"].selected{border-color:var(--gold);background:#FFF8EC;box-shadow:0 0 0 3px rgba(244,168,50,0.12);}
+  .emoji-btn[data-val="3"].selected{border-color:#8A9BB5;background:#F4F6FA;}
+  .emoji-btn[data-val="4"].selected{border-color:var(--sky);background:var(--light);}
+  .emoji-btn[data-val="5"].selected{border-color:var(--green);background:#EBF9F2;box-shadow:0 0 0 3px rgba(39,169,108,0.12);}
+  textarea{width:100%;padding:12px 14px;border:1.5px solid var(--gray2);border-radius:9px;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);resize:vertical;min-height:80px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+  textarea:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(59,143,212,0.12);}
+  .btn{padding:12px 28px;border-radius:9px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:'Inter',sans-serif;}
+  .btn-primary{background:linear-gradient(135deg,var(--blue),var(--sky));color:var(--white);box-shadow:0 4px 14px rgba(29,95,168,0.3);}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(29,95,168,0.4);}
+  .btn-primary:disabled{opacity:0.6;cursor:wait;transform:none;}
+  .btn-secondary{background:var(--gray3);color:var(--sub);}
+  .btn-secondary:hover{background:var(--gray2);color:var(--text);}
+  .btn-sm{padding:7px 16px;font-size:12px;}
+  .btn-row{display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px;}
+  .thankyou-wrap{text-align:center;padding:60px 40px;}
+  .thankyou-wrap .big-icon{font-size:64px;margin-bottom:16px;display:block;}
+  .thankyou-wrap h2{font-family:'Sora',sans-serif;font-size:24px;font-weight:700;color:var(--navy);margin-bottom:10px;}
+  .thankyou-wrap p{font-size:14px;color:var(--sub);max-width:380px;margin:0 auto 24px;line-height:1.6;}
+  .val-err{font-size:11px;color:var(--warn);margin-top:5px;display:none;}
+  .val-err.show{display:block;}
+  .input-error{border-color:var(--warn)!important;}
+  .step-indicator{display:flex;align-items:center;gap:6px;margin-bottom:20px;}
+  .step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;transition:all 0.3s;}
+  .step-dot.done{background:var(--teal);color:var(--white);}
+  .step-dot.active{background:var(--blue);color:var(--white);box-shadow:0 0 0 4px rgba(29,95,168,0.2);}
+  .step-dot.pending{background:var(--gray3);color:var(--sub);}
+  .step-line{flex:1;height:2px;background:var(--gray3);border-radius:99px;}
+  .step-line.done{background:var(--teal);}
+  .hidden{display:none!important;}
+
+  /* MY HISTORY */
+  .history-wrap{max-width:900px;margin:0 auto;padding:32px 24px 60px;}
+  .history-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+  .history-header h1{font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:var(--navy);}
+  .history-header p{font-size:13px;color:var(--sub);margin-top:2px;}
+  .session-banner{background:var(--light);border:1.5px solid var(--gray2);border-radius:var(--radius);padding:14px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .session-banner .session-icon{font-size:22px;flex-shrink:0;}
+  .session-banner .session-info{flex:1;min-width:180px;}
+  .session-banner .session-info strong{font-size:13px;font-weight:600;color:var(--navy);display:block;}
+  .session-banner .session-info span{font-size:12px;color:var(--sub);}
+  .session-name-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;}
+  .session-name-row input{flex:1;min-width:160px;max-width:280px;padding:8px 12px;border:1.5px solid var(--gray2);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;outline:none;}
+  .session-name-row input:focus{border-color:var(--sky);}
+  .history-empty{text-align:center;padding:60px 20px;color:var(--sub);}
+  .history-empty .empty-icon{font-size:48px;margin-bottom:12px;}
+  .history-empty p{font-size:14px;}
+  .history-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden;}
+  .hcard-header{padding:16px 20px;display:flex;align-items:center;gap:14px;cursor:pointer;user-select:none;transition:background 0.15s;}
+  .hcard-header:hover{background:var(--mist);}
+  .hcard-date{font-size:11px;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;color:var(--sub);min-width:90px;}
+  .hcard-meta{flex:1;}
+  .hcard-meta .rated{font-size:14px;font-weight:600;color:var(--navy);}
+  .hcard-meta .from{font-size:12px;color:var(--sub);margin-top:2px;}
+  .badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;}
+  .badge-gicc{background:#EAF0FB;color:#2255BB;}
+  .badge-ptcmnl{background:#EAF9F3;color:#1A8055;}
+  .badge-ptcdvo{background:#FFF4E6;color:#B06000;}
+  .score-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:99px;font-size:12px;font-weight:700;background:var(--mist);}
+  .hcard-arrow{font-size:16px;color:var(--sub);transition:transform 0.2s;}
+  .hcard-arrow.open{transform:rotate(90deg);}
+  .hcard-body{padding:0 20px 20px;display:none;border-top:1px solid var(--gray3);}
+  .hcard-body.open{display:block;}
+  .dim-grid-h{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:16px;}
+  .dim-box{background:var(--mist);border-radius:10px;padding:14px 16px;}
+  .dim-box .dim-label{font-size:11px;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;color:var(--sub);margin-bottom:6px;}
+  .dim-box .dim-val{font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:var(--navy);}
+  .dim-box .dim-stars{font-size:13px;margin-top:2px;}
+  .comment-section{margin-top:16px;}
+  .comment-item{margin-bottom:10px;}
+  .comment-item .clabel{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.6px;color:var(--sub);margin-bottom:4px;}
+  .comment-item .ctext{font-size:13px;color:var(--text);line-height:1.6;background:var(--mist);padding:10px 14px;border-radius:8px;}
+
+  @media(max-width:600px){
+    .survey-hero{padding:28px 24px;}
+    .card{padding:24px 20px;}
+    .emoji-scale{gap:5px;}
+    .emoji-btn .emoji{font-size:18px;}
+    .emoji-btn .elabel{font-size:9px;}
+    .site-header{padding:0 16px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <div class="brand-icon">🎯</div>
+    <div class="brand-name">VOC<span>pulse</span></div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="tab-survey" onclick="showPage('survey')">Survey</button>
+    <button class="nav-tab" id="tab-history" onclick="showPage('history')">My History</button>
+  </div>
+</header>
+
+<!-- SYNC STATUS BAR -->
+<div class="sync-bar">
+  <div class="sync-dot offline" id="syncDot"></div>
+  <div class="sync-text" id="syncText">Connecting to server…</div>
+</div>
+
+<!-- ══════════════════ SURVEY PAGE -->
+<div id="page-survey" class="page active">
+  <div class="survey-wrap">
+    <div class="survey-hero">
+      <div class="eyebrow">Internal Voice of Customer</div>
+      <h1>How are we doing for each other?</h1>
+      <p>Share honest feedback about the departments you work with. Your responses help us improve how we serve one another across GICC, PTC Manila, and PTC Davao.</p>
+    </div>
+    <div class="step-indicator" id="stepIndicator">
+      <div class="step-dot active" id="sdot1">1</div><div class="step-line" id="sline1"></div>
+      <div class="step-dot pending" id="sdot2">2</div><div class="step-line" id="sline2"></div>
+      <div class="step-dot pending" id="sdot3">3</div><div class="step-line" id="sline3"></div>
+      <div class="step-dot pending" id="sdot4">4</div><div class="step-line" id="sline4"></div>
+      <div class="step-dot pending" id="sdot5">5</div><div class="step-line" id="sline5"></div>
+      <div class="step-dot pending" id="sdot6">6</div><div class="step-line" id="sline6"></div>
+      <div class="step-dot pending" id="sdot7">7</div>
+    </div>
+    <div class="progress-label" id="progressLabel">Step 1 of 7</div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill" style="width:14%"></div></div>
+
+    <div id="step1" class="card">
+      <div class="section-header"><div class="section-icon" style="background:#EAF3FB">🏢</div><div><h2>About You</h2><p>Tell us which company and department you belong to</p></div></div>
+      <div class="field-group">
+        <label class="field-label">Company</label>
+        <select id="respondentCompany">
+          <option value="">— Select company —</option>
+          <option>GICC</option><option>PTC Manila</option><option>PTC Davao</option>
+        </select>
+        <span class="val-err" id="err-company">Please select your company.</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Your Department</label>
+        <select id="respondentDept">
+          <option value="">— Select your department —</option>
+          <option>General Accounting</option><option>Treasury</option><option>Credit and Collection</option><option>HR</option><option>Admin Services</option><option>IT</option><option>General Services</option><option>Audit</option><option>Sales / Marketing</option><option>Customer / Technical Service</option><option>Procurement / Importation</option><option>Warehouse / Logistics</option>
+        </select>
+        <span class="val-err" id="err-dept">Please select your department.</span>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Your Name <span style="font-weight:400;color:var(--sub)">(used to track your history)</span></label>
+        <input type="text" id="respondentName" placeholder="e.g. Juan dela Cruz">
+        <span class="val-err" id="err-name">Please enter your name so we can show your history.</span>
+      </div>
+      <div class="btn-row"><span></span><button class="btn btn-primary" onclick="nextStep(1)">Continue →</button></div>
+    </div>
+
+    <div id="step2" class="card hidden">
+      <div class="section-header"><div class="section-icon" style="background:#EAF9F3">🎯</div><div><h2>Which department are you rating?</h2><p>Select the support department you interact with most</p></div></div>
+      <div class="field-group">
+        <label class="field-label">Department Being Rated</label>
+        <select id="ratedDept">
+          <option value="">— Select department —</option>
+          <option>General Accounting</option><option>Treasury</option><option>Credit and Collection</option><option>HR</option><option>Admin Services</option><option>IT</option><option>General Services</option><option>Audit</option><option>Sales / Marketing</option><option>Customer / Technical Service</option><option>Procurement / Importation</option><option>Warehouse / Logistics</option>
+        </select>
+        <span class="val-err" id="err-rateddept">Please select a department.</span>
+      </div>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="prevStep(2)">← Back</button><button class="btn btn-primary" onclick="nextStep(2)">Continue →</button></div>
+    </div>
+
+    <div id="step3" class="card hidden">
+      <div class="section-header"><div class="section-icon" style="background:#FFF4E6">⭐</div><div><h2>Service Quality</h2><p>How well does the department deliver on its core responsibilities?</p></div></div>
+      <div id="sq-questions"></div>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="prevStep(3)">← Back</button><button class="btn btn-primary" onclick="nextStep(3)">Continue →</button></div>
+    </div>
+
+    <div id="step4" class="card hidden">
+      <div class="section-header"><div class="section-icon" style="background:#EAF3FB">💬</div><div><h2>Communication & Responsiveness</h2><p>How well do they communicate and respond to your needs?</p></div></div>
+      <div id="cr-questions"></div>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="prevStep(4)">← Back</button><button class="btn btn-primary" onclick="nextStep(4)">Continue →</button></div>
+    </div>
+
+    <div id="step5" class="card hidden">
+      <div class="section-header"><div class="section-icon" style="background:#F0EBFB">⚙️</div><div><h2>Process Efficiency</h2><p>How smooth and streamlined are the processes you go through?</p></div></div>
+      <div id="pe-questions"></div>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="prevStep(5)">← Back</button><button class="btn btn-primary" onclick="nextStep(5)">Continue →</button></div>
+    </div>
+
+    <div id="step6" class="card hidden">
+      <div class="section-header"><div class="section-icon" style="background:#EBF9F2">🖥️</div><div><h2>Tools, Leadership & Overall Satisfaction</h2><p>Rate the tools, systems, leadership, and overall experience</p></div></div>
+      <div id="tl-questions"></div>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="prevStep(6)">← Back</button><button class="btn btn-primary" onclick="nextStep(6)">Continue →</button></div>
+    </div>
+
+    <div id="step7" class="card hidden">
+      <div class="section-header"><div class="section-icon" style="background:#FFF0F4">✍️</div><div><h2>Open Feedback</h2><p>Share anything else you'd like us to know</p></div></div>
+      <div class="field-group"><label class="field-label">What is this department doing well?</label><textarea id="commentPos" placeholder="Share what you appreciate about them…"></textarea></div>
+      <div class="field-group"><label class="field-label">What could they improve?</label><textarea id="commentImp" placeholder="Any suggestions for improvement…"></textarea></div>
+      <div class="field-group"><label class="field-label">Any other comments?</label><textarea id="commentOther" placeholder="Anything else you'd like to add…"></textarea></div>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="prevStep(7)">← Back</button><button class="btn btn-primary" id="submitBtn" onclick="submitSurvey()">Submit Feedback ✓</button></div>
+    </div>
+
+    <div id="stepThankyou" class="card hidden">
+      <div class="thankyou-wrap">
+        <span class="big-icon">🎉</span>
+        <h2>Thank you for your feedback!</h2>
+        <p>Your response has been recorded. View it anytime under <strong>My History</strong>.</p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="startOver()">Submit Another</button>
+          <button class="btn btn-primary" onclick="showPage('history')">View My History →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ MY HISTORY PAGE -->
+<div id="page-history" class="page">
+  <div class="history-wrap">
+    <div class="history-header">
+      <div>
+        <h1>My Survey History</h1>
+        <p>All feedback you have submitted, synced from the shared database</p>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="refreshHistory()">🔄 Refresh</button>
+    </div>
+
+    <div class="session-banner">
+      <span class="session-icon">👤</span>
+      <div class="session-info">
+        <strong>Session Identity</strong>
+        <span>Enter your name exactly as you did in the survey to view only your submissions.</span>
+        <div class="session-name-row">
+          <input type="text" id="sessionName" placeholder="Your name (e.g. Juan dela Cruz)" oninput="renderHistory()">
+          <button class="btn btn-secondary btn-sm" onclick="clearSessionName()">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script>
+// ── CONFIGURATION ───────────────────────────────────────────
+// Fill these in from your Airtable base.
+const AIRTABLE_BASE_ID = 'appUYFZsgkNk9qXOv';        // starts with 'app'
+const AIRTABLE_TABLE_NAME = 'Responses';                    // your table name
+const AIRTABLE_TOKEN = 'patOuQnK1gJomD9hT.59430e3fa7f2611ec06248aba9f959ca35a4fe7dde30f18d8db819f8e9764da5';
+
+let DB = [];
+
+function setSyncStatus(state, text) {
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncText');
+  dot.className = 'sync-dot ' + state;
+  txt.innerHTML = text;
+}
+
+function isConfigured() {
+  return AIRTABLE_BASE_ID && !AIRTABLE_BASE_ID.startsWith('PASTE_')
+      && AIRTABLE_TOKEN && !AIRTABLE_TOKEN.startsWith('PASTE_');
+}
+
+// ── AIRTABLE REST API ────────────────────────────────────────
+const AIRTABLE_URL = () => `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE_NAME)}`;
+
+async function fetchAllResponses(silent) {
+  if (!isConfigured()) {
+    setSyncStatus('offline', 'Not configured — edit AIRTABLE_BASE_ID and AIRTABLE_TOKEN at the top of the script.');
+    return;
+  }
+  if (!silent) setSyncStatus('syncing', 'Fetching latest data…');
+  try {
+    let records = [];
+    let offset = null;
+    do {
+      const url = AIRTABLE_URL() + '?pageSize=100' + (offset ? '&offset=' + offset : '');
+      const res = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}` }
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      records = records.concat(data.records || []);
+      offset = data.offset;
+    } while (offset);
+
+    DB = records.map(normalizeRecord);
+    setSyncStatus('online', `Connected — <strong>${DB.length}</strong> response${DB.length !== 1 ? 's' : ''} in shared database`);
+    if (document.getElementById('page-history').classList.contains('active')) renderHistory();
+  } catch (err) {
+    setSyncStatus('error', 'Could not reach Airtable — ' + (err.message || err));
+  }
+}
+
+async function submitToAirtable(record) {
+  const fields = {
+    Date: record.date,
+    Company: record.company,
+    FromDept: record.fromDept,
+    RatedDept: record.ratedDept,
+    RespondentName: record.name,
+    SQAvg: record.sqAvg,
+    CRAvg: record.crAvg,
+    PEAvg: record.peAvg,
+    TLAvg: record.tlAvg,
+    Overall: record.overall,
+    CommentPositive: record.commentPos,
+    CommentImprovement: record.commentImp,
+    CommentOther: record.commentOther,
+    RatingsJson: record.ratingsJson,
+  };
+
+  const res = await fetch(AIRTABLE_URL(), {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${AIRTABLE_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ fields })
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error('HTTP ' + res.status + ' — ' + errText.slice(0, 200));
+  }
+  return res.json();
+}
+
+// Normalize a record coming back from Airtable
+function normalizeRecord(r) {
+  const f = r.fields || {};
+  return {
+    id: r.id,
+    date: f.Date || '',
+    company: f.Company || '',
+    fromDept: f.FromDept || '',
+    ratedDept: f.RatedDept || '',
+    name: f.RespondentName || '',
+    sqAvg: parseFloat(f.SQAvg ?? 0),
+    crAvg: parseFloat(f.CRAvg ?? 0),
+    peAvg: parseFloat(f.PEAvg ?? 0),
+    tlAvg: parseFloat(f.TLAvg ?? 0),
+    overall: parseFloat(f.Overall ?? 0),
+    commentPos: f.CommentPositive ?? '',
+    commentImp: f.CommentImprovement ?? '',
+    commentOther: f.CommentOther ?? '',
+    ratingsJson: f.RatingsJson ?? '{}',
+  };
+}
+
+function showToast(msg, isErr = false) {
+  let t = document.getElementById('toast');
+  if (!t) { t = document.createElement('div'); t.id = 'toast'; t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);padding:12px 24px;border-radius:10px;font-size:13px;font-weight:600;color:#fff;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.2);transition:opacity .4s'; document.body.appendChild(t); }
+  t.textContent = msg; t.style.background = isErr ? '#E05252' : '#0F1F3D'; t.style.opacity = '1';
+  clearTimeout(t._hide); t._hide = setTimeout(() => t.style.opacity = '0', 3000);
+}
+
+// ── SURVEY ENGINE ──────────────────────────────────────────
+const QUESTIONS={
+  sq:[{id:'sq1',text:'The department consistently delivers accurate and reliable outputs.'},{id:'sq2',text:'Requests are completed within a reasonable and agreed timeline.'},{id:'sq3',text:'The quality of their work meets or exceeds my expectations.'}],
+  cr:[{id:'cr1',text:'They respond promptly when I reach out with a request or concern.'},{id:'cr2',text:'Information is communicated clearly and in a timely manner.'},{id:'cr3',text:'They proactively update me on the status of my requests.'}],
+  pe:[{id:'pe1',text:'Their processes are simple and easy to follow.'},{id:'pe2',text:'There are minimal errors or rework needed after handoffs.'},{id:'pe3',text:'They are open to improving how they work based on feedback.'}],
+  tl:[{id:'tl1',text:'The tools and systems used by this department support efficient work.'},{id:'tl2',text:'The leadership of this department demonstrates good people management.'},{id:'tl3',text:'Overall, I am satisfied with this department as an internal service provider.'}]
+};
+const EMOJIS=[{val:1,emoji:'😞',label:'Poor'},{val:2,emoji:'😕',label:'Fair'},{val:3,emoji:'😐',label:'Neutral'},{val:4,emoji:'😊',label:'Good'},{val:5,emoji:'🤩',label:'Excellent'}];
+let ratings={};
+let currentStep=1;
+const TOTAL_STEPS=7;
+
+function buildRatingBlock(containerid,qgroup){
+  const container=document.getElementById(containerid);container.innerHTML='';
+  QUESTIONS[qgroup].forEach(q=>{
+    const div=document.createElement('div');div.className='rating-question';
+    div.innerHTML=`<div class="q-text">${q.text}</div><div class="emoji-scale" id="scale-${q.id}">${EMOJIS.map(e=>`<button class="emoji-btn" data-val="${e.val}" data-qid="${q.id}" onclick="selectRating('${q.id}',${e.val})"><span class="emoji">${e.emoji}</span><span class="elabel">${e.label}</span></button>`).join('')}</div><div class="val-err" id="err-${q.id}">Please select a rating.</div>`;
+    container.appendChild(div);
+  });
+}
+
+function selectRating(qid,val){
+  ratings[qid]=val;
+  document.querySelectorAll(`#scale-${qid} .emoji-btn`).forEach(btn=>{btn.classList.toggle('selected',parseInt(btn.dataset.val)===val);});
+  const err=document.getElementById(`err-${qid}`);if(err)err.classList.remove('show');
+}
+
+function restoreRatings(qgroup){
+  QUESTIONS[qgroup].forEach(q=>{
+    if(ratings[q.id])document.querySelectorAll(`#scale-${q.id} .emoji-btn`).forEach(btn=>{btn.classList.toggle('selected',parseInt(btn.dataset.val)===ratings[q.id]);});
+  });
+}
+
+function showStep(n){
+  for(let i=1;i<=TOTAL_STEPS;i++){const el=document.getElementById(`step${i}`);if(el)el.classList.toggle('hidden',i!==n);}
+  document.getElementById('stepThankyou').classList.add('hidden');
+  const pct=Math.round((n/TOTAL_STEPS)*100);
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent=`Step ${n} of ${TOTAL_STEPS}`;
+  for(let i=1;i<=TOTAL_STEPS;i++){
+    const dot=document.getElementById(`sdot${i}`);
+    dot.classList.remove('done','active','pending');
+    if(i<n){dot.classList.add('done');dot.textContent='✓';}
+    else if(i===n){dot.classList.add('active');dot.textContent=i;}
+    else{dot.classList.add('pending');dot.textContent=i;}
+    if(i<TOTAL_STEPS)document.getElementById(`sline${i}`).classList.toggle('done',i<n);
+  }
+  currentStep=n;window.scrollTo({top:80,behavior:'smooth'});
+}
+
+function nextStep(from){
+  if(!validateStep(from))return;
+  if(from===2){buildRatingBlock('sq-questions','sq');restoreRatings('sq');}
+  if(from===3){buildRatingBlock('cr-questions','cr');restoreRatings('cr');}
+  if(from===4){buildRatingBlock('pe-questions','pe');restoreRatings('pe');}
+  if(from===5){buildRatingBlock('tl-questions','tl');restoreRatings('tl');}
+  showStep(from+1);
+}
+function prevStep(from){
+  if(from===3)restoreRatings('sq');if(from===4)restoreRatings('cr');
+  if(from===5)restoreRatings('pe');if(from===6)restoreRatings('tl');
+  showStep(from-1);
+}
+
+function validateStep(step){
+  let ok=true;
+  if(step===1){
+    const co=document.getElementById('respondentCompany');
+    const dp=document.getElementById('respondentDept');
+    const nm=document.getElementById('respondentName');
+    if(!co.value){document.getElementById('err-company').classList.add('show');co.classList.add('input-error');ok=false;}
+    else{document.getElementById('err-company').classList.remove('show');co.classList.remove('input-error');}
+    if(!dp.value){document.getElementById('err-dept').classList.add('show');dp.classList.add('input-error');ok=false;}
+    else{document.getElementById('err-dept').classList.remove('show');dp.classList.remove('input-error');}
+    if(!nm.value.trim()){document.getElementById('err-name').classList.add('show');nm.classList.add('input-error');ok=false;}
+    else{document.getElementById('err-name').classList.remove('show');nm.classList.remove('input-error');}
+  }
+  if(step===2){
+    const rd=document.getElementById('ratedDept');
+    if(!rd.value){document.getElementById('err-rateddept').classList.add('show');rd.classList.add('input-error');ok=false;}
+    else{document.getElementById('err-rateddept').classList.remove('show');rd.classList.remove('input-error');}
+  }
+  if(step>=3&&step<=6){
+    const groupMap={3:'sq',4:'cr',5:'pe',6:'tl'};
+    QUESTIONS[groupMap[step]].forEach(q=>{if(!ratings[q.id]){const err=document.getElementById(`err-${q.id}`);if(err)err.classList.add('show');ok=false;}});
+  }
+  return ok;
+}
+
+function avg(ids){const vals=ids.map(id=>ratings[id]||0);return parseFloat((vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(2));}
+
+async function submitSurvey(){
+  const sqAvg=avg(['sq1','sq2','sq3']);
+  const crAvg=avg(['cr1','cr2','cr3']);
+  const peAvg=avg(['pe1','pe2','pe3']);
+  const tlAvg=avg(['tl1','tl2','tl3']);
+  const name=document.getElementById('respondentName').value.trim();
+
+  const record={
+    date:new Date().toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'2-digit'}),
+    company:document.getElementById('respondentCompany').value,
+    fromDept:document.getElementById('respondentDept').value,
+    ratedDept:document.getElementById('ratedDept').value,
+    name,
+    sqAvg,crAvg,peAvg,tlAvg,
+    overall:parseFloat(((sqAvg+crAvg+peAvg+tlAvg)/4).toFixed(2)),
+    commentPos:document.getElementById('commentPos').value,
+    commentImp:document.getElementById('commentImp').value,
+    commentOther:document.getElementById('commentOther').value,
+    ratingsJson:JSON.stringify(ratings),
+  };
+
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true; btn.textContent='Submitting…';
+
+  if(!isConfigured()){
+    showToast('⚠️ Not configured — response not saved. See setup instructions in the HTML file.',true);
+    btn.disabled=false; btn.textContent='Submit Feedback ✓';
+    return;
+  }
+
+  try{
+    setSyncStatus('syncing','Submitting your response…');
+    await submitToAirtable(record);
+    setSyncStatus('online','Response submitted successfully!');
+    document.getElementById('sessionName').value=name;
+
+    for(let i=1;i<=TOTAL_STEPS;i++)document.getElementById(`step${i}`).classList.add('hidden');
+    document.getElementById('stepThankyou').classList.remove('hidden');
+    document.getElementById('progressFill').style.width='100%';
+    document.getElementById('progressLabel').textContent='Completed!';
+    document.getElementById('stepIndicator').style.display='none';
+
+    // refresh shared DB in background
+    fetchAllResponses(true);
+  }catch(err){
+    setSyncStatus('error','Submission failed — '+(err.message||err));
+    showToast('❌ Could not submit. Please check your connection and try again.',true);
+  }finally{
+    btn.disabled=false; btn.textContent='Submit Feedback ✓';
+  }
+}
+
+function startOver(){
+  ratings={};
+  ['respondentCompany','respondentDept','ratedDept'].forEach(id=>document.getElementById(id).value='');
+  ['respondentName','commentPos','commentImp','commentOther'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('stepIndicator').style.display='flex';
+  document.getElementById('stepThankyou').classList.add('hidden');
+  showStep(1);
+}
+
+// ── PAGE NAVIGATION ────────────────────────────────────────
+function showPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById(`page-${p}`).classList.add('active');
+  document.getElementById('tab-survey').classList.toggle('active',p==='survey');
+  document.getElementById('tab-history').classList.toggle('active',p==='history');
+  if(p==='history'){
+    renderHistory();
+    fetchAllResponses(true);
+  }
+}
+
+function refreshHistory(){ fetchAllResponses(); }
+
+// ── MY HISTORY RENDER ──────────────────────────────────────
+function clearSessionName(){document.getElementById('sessionName').value='';renderHistory();}
+
+function renderHistory(){
+  const sessionName=document.getElementById('sessionName').value.trim().toLowerCase();
+  const container=document.getElementById('historyList');
+  let data=[...DB];
+  if(sessionName) data=data.filter(r=>(r.name||'').toLowerCase()===sessionName);
+  data=data.reverse();
+
+  if(!data.length){
+    container.innerHTML=`<div class="history-empty"><div class="empty-icon">📋</div><p>${sessionName?`No submissions found for "<strong>${sessionName}</strong>".`:'No submissions yet, or enter your name above to filter.'}</p></div>`;
+    return;
+  }
+
+  const scoreColor=v=>v>=4?'var(--green)':v>=3?'var(--gold)':'var(--warn)';
+  const compBadge=c=>{const cls=c==='GICC'?'badge-gicc':c==='PTC Manila'?'badge-ptcmnl':'badge-ptcdvo';return`<span class="badge ${cls}">${c}</span>`;};
+  const stars=(v)=>{const f=Math.round(v);return[1,2,3,4,5].map(i=>i<=f?'⭐':'☆').join('');};
+
+  container.innerHTML=data.map((r,idx)=>{
+    const hasComment=r.commentPos||r.commentImp||r.commentOther;
+    const cardId=r.id||idx;
+    return`<div class="history-card">
+      <div class="hcard-header" onclick="toggleCard('${cardId}')">
+        <div class="hcard-date">${r.date}</div>
+        <div class="hcard-meta">
+          <div class="rated">Rated: ${r.ratedDept} &nbsp; ${compBadge(r.company)}</div>
+          <div class="from">From: ${r.fromDept} &nbsp;·&nbsp; ${r.name}</div>
+        </div>
+        <span class="score-pill" style="color:${scoreColor(r.overall)}">● ${r.overall}</span>
+        <span class="hcard-arrow" id="arr-${cardId}">▶</span>
+      </div>
+      <div class="hcard-body" id="body-${cardId}">
+        <div class="dim-grid-h">
+          <div class="dim-box"><div class="dim-label">Service Quality</div><div class="dim-val" style="color:${scoreColor(r.sqAvg)}">${r.sqAvg}</div><div class="dim-stars">${stars(r.sqAvg)}</div></div>
+          <div class="dim-box"><div class="dim-label">Communication</div><div class="dim-val" style="color:${scoreColor(r.crAvg)}">${r.crAvg}</div><div class="dim-stars">${stars(r.crAvg)}</div></div>
+          <div class="dim-box"><div class="dim-label">Process Efficiency</div><div class="dim-val" style="color:${scoreColor(r.peAvg)}">${r.peAvg}</div><div class="dim-stars">${stars(r.peAvg)}</div></div>
+          <div class="dim-box"><div class="dim-label">Tools & Leadership</div><div class="dim-val" style="color:${scoreColor(r.tlAvg)}">${r.tlAvg}</div><div class="dim-stars">${stars(r.tlAvg)}</div></div>
+        </div>
+        ${hasComment?`<div class="comment-section">
+          ${r.commentPos?`<div class="comment-item"><div class="clabel">✅ What they do well</div><div class="ctext">${r.commentPos}</div></div>`:''}
+          ${r.commentImp?`<div class="comment-item"><div class="clabel">🔧 Suggested improvement</div><div class="ctext">${r.commentImp}</div></div>`:''}
+          ${r.commentOther?`<div class="comment-item"><div class="clabel">💬 Other comments</div><div class="ctext">${r.commentOther}</div></div>`:''}
+        </div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleCard(id){
+  const body=document.getElementById(`body-${id}`);
+  const arr=document.getElementById(`arr-${id}`);
+  body.classList.toggle('open');
+  arr.classList.toggle('open');
+}
+
+// ── INIT ──────────────────────────────────────────────────
+showStep(1);
+fetchAllResponses(true);
+</script>
+</body>
+</html>
